@@ -8,11 +8,11 @@ const config: GatsbyConfig = {
     // You can overwrite values here that are used for the SEO component
     // You can also add new values here to query them like usual
     // See all options: https://github.com/LekoArts/gatsby-themes/blob/main/themes/gatsby-theme-minimal-blog/gatsby-config.mjs
-    siteTitle: `Minimal Blog`,
-    siteTitleAlt: `Minimal Blog - Gustavo Vasquez`,
-    siteHeadline: `Minimal Blog - Gustavo Vasquez from @elkesha`,
+    siteTitle: `Gustavo's Blog`,
+    siteTitleAlt: `Gustavo's Blog - Gustavo Vasquez`,
+    siteHeadline: `Gustavo's Blog - Gustavo Vasquez from @elkesha`,
     siteUrl: `https://elkesha.com`,
-    siteDescription: `Typography driven, feature-rich blogging theme with minimal aesthetics. Includes tags/categories support and extensive features for code blocks such as live preview, line numbers, and line highlighting.`,
+    siteDescription: `Personal blog and portfolio of Gustavo Vasquez. Sharing thoughts on technology, science,and more.`,
     siteImage: `/banner.jpg`,
     siteLanguage: `en`,
     author: `@elkesha`,
@@ -29,18 +29,26 @@ const config: GatsbyConfig = {
             slug: `/blog`,
           },
           {
+            title: `Projects`,
+            slug: `/projects`,
+          },
+          {
             title: `About`,
             slug: `/about`,
           },
         ],
         externalLinks: [
           {
-            name: `Bluesky`,
-            url: `https://bsky.app/profile/lekoarts.de`,
+            name: `GitHub`,
+            url: `https://github.com/gus-vasquez`,
           },
           {
-            name: `Homepage`,
-            url: `https://www.lekoarts.de?utm_source=minimal-blog&utm_medium=Starter`,
+            name: `LinkedIn`,
+            url: `https://www.linkedin.com/in/gustavo-vasquez-lozada`,
+          },
+          {
+            name: `X`,
+            url: `https://x.com/gus_vasquez_`,
           },
         ],
       },
@@ -63,16 +71,22 @@ const config: GatsbyConfig = {
         // https://css-tricks.com/meta-theme-color-and-trickery/
         // theme_color: `#6B46C1`,
         display: `standalone`,
+        icon: `static/favicon.ico`,
         icons: [
           {
-            src: `/android-chrome-192x192.png`,
-            sizes: `192x192`,
-            type: `image/png`,
+            src: `static/favicon.ico`,
+            sizes: `16x16`,
+            type: `image/x-icon`,
           },
           {
-            src: `/android-chrome-512x512.png`,
+            src: `static/profile.jpg`,
+            sizes: `192x192`,
+            type: `image/jpeg`,
+          },
+          {
+            src: `static/profile.jpg`,
             sizes: `512x512`,
-            type: `image/png`,
+            type: `image/jpeg`,
           },
         ],
       },

@@ -1,7 +1,8 @@
 import * as React from "react"
 import Layout from "@lekoarts/gatsby-theme-minimal-blog/src/components/layout"
 import Seo from "@lekoarts/gatsby-theme-minimal-blog/src/components/seo"
-import { Text, Box } from "theme-ui"
+import { Text, Box, Flex } from "theme-ui"
+import GoodreadsWidget from "../components/GoodreadsWidget"
 
 const About = () => {
   // Add target="_blank" to external links in header
@@ -17,11 +18,11 @@ const About = () => {
   return (
     <Layout>
       <Seo title="About" />
-      <Text as="h1" sx={{ fontSize: [4, 5, 6], fontWeight: 'bold', color: 'heading', mb: [4, 5] }}>
+      <Text as="h1" sx={{ fontSize: [4, 5, 6], fontWeight: 'bold', color: 'heading', mb: [3, 4] }}>
         About
       </Text>
       
-      <Box sx={{ mb: [4, 5] }}>
+      <Box sx={{ mb: [3, 4] }}>
         <div style={{position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%'}}>
           <img src="/stone.jpg" alt="Stone Mountain" style={{width: '400px', height: 'auto', display: 'block'}} />
           <div style={{fontSize: '0.875rem', textAlign: 'center', marginTop: '0.5rem', fontStyle: 'italic', color: 'var(--theme-ui-colors-text)', lineHeight: '1.4'}}>
@@ -61,6 +62,11 @@ const About = () => {
           I'm fluent in <strong>Spanish</strong>, <strong>English</strong> and <strong>Japanese</strong>.
           Currently learning <strong>Chinese</strong>.
         </Text>
+      </Box>
+
+      {/* Goodreads Widget */}
+      <Box sx={{ mb: [4, 5], mt: [3, 4], display: 'flex', justifyContent: 'center' }}>
+        <GoodreadsWidget />
       </Box>
     </Layout>
   )

@@ -18,11 +18,11 @@ const About = () => {
   return (
     <Layout>
       <Seo title="About" />
-      <Text as="h1" sx={{ fontSize: [4, 5, 6], fontWeight: 'bold', color: 'heading', mb: [3, 4] }}>
+      <Text as="h1" sx={{ fontSize: [4, 5, 6], fontWeight: 'bold', color: 'heading', mb: [4, 5] }}>
         About
       </Text>
       
-      <Box sx={{ mb: [3, 4] }}>
+      <Box sx={{ mb: [4, 5] }}>
         <div style={{position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%'}}>
           <img src="/stone.jpg" alt="Stone Mountain" style={{width: '400px', height: 'auto', display: 'block'}} />
           <div style={{fontSize: '0.875rem', textAlign: 'center', marginTop: '0.5rem', fontStyle: 'italic', color: 'var(--theme-ui-colors-text)', lineHeight: '1.4'}}>
@@ -33,7 +33,7 @@ const About = () => {
         </div>
       </Box>
 
-      <Box sx={{ fontSize: [1, 2], lineHeight: 1.8 }}>
+      <Box sx={{ fontSize: [1, 2], lineHeight: 1.8, mb: [4, 5] }}>
         <Text sx={{ mb: 4 }}>
           I'm <strong>Gustavo Vasquez</strong>, an engineer based in New York.
           This is my{' '}
@@ -65,7 +65,7 @@ const About = () => {
       </Box>
 
       {/* Goodreads Widget */}
-      <Box sx={{ mb: [4, 5], mt: [3, 4], display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ mb: [4, 5], mt: [4, 5], display: 'flex', justifyContent: 'center' }}>
         <GoodreadsWidget />
       </Box>
     </Layout>

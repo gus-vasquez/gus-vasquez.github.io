@@ -42,6 +42,17 @@ Also be sure to check out other [Free & Open Source Gatsby Themes](https://theme
 - SEO (Sitemap, OpenGraph tags, Twitter tags)
 - WebApp Manifest
 
+## 🔄 GitHub contributions heatmap
+
+This site sources the latest contributions chart from the GitHub GraphQL API at build time and renders it on the `about` page. To keep the visualization up to date:
+
+1. Create a personal access token (classic) with `read:user` and `repo` scopes so private contributions are included.
+2. Add the token locally as `GH_CONTRIBUTIONS_TOKEN` (or `GH_CONTRIBUTIONS_TOKEN`) in your `.env` so `gatsby build` can fetch the data.
+3. Store the same token in the repository secrets under **Actions → Secrets and variables → Actions** with a name that *doesn’t* start with `GITHUB_`, e.g. `GH_CONTRIBUTIONS_TOKEN`. The workflow exports it back to `GITHUB_CONTRIBUTIONS_TOKEN` at runtime.
+4. A scheduled GitHub Actions workflow (`.github/workflows/update-contributions.yml`) runs daily to rebuild and deploy via the existing `npm run deploy` script, ensuring the heatmap stays in sync without manual steps.
+
+You can trigger the workflow manually from the Actions tab (`Update GitHub contributions`) whenever you want to refresh the data immediately.
+
 ## ⏱️ Quick Start
 
 Deploy this starter with one click on [Netlify](https://app.netlify.com/signup):

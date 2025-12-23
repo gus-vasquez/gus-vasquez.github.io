@@ -71,22 +71,32 @@ const config: GatsbyConfig = {
         // https://css-tricks.com/meta-theme-color-and-trickery/
         // theme_color: `#6B46C1`,
         display: `standalone`,
-        icon: `static/favicon.ico`,
+        icon: `static/android-chrome-512x512.png`,
         icons: [
           {
-            src: `static/favicon.ico`,
+            src: `/favicon-16x16.png`,
             sizes: `16x16`,
-            type: `image/x-icon`,
+            type: `image/png`,
           },
           {
-            src: `static/profile.jpg`,
+            src: `/favicon-32x32.png`,
+            sizes: `32x32`,
+            type: `image/png`,
+          },
+          {
+            src: `/apple-touch-icon.png`,
+            sizes: `180x180`,
+            type: `image/png`,
+          },
+          {
+            src: `/android-chrome-192x192.png`,
             sizes: `192x192`,
-            type: `image/jpeg`,
+            type: `image/png`,
           },
           {
-            src: `static/profile.jpg`,
+            src: `/android-chrome-512x512.png`,
             sizes: `512x512`,
-            type: `image/jpeg`,
+            type: `image/png`,
           },
         ],
       },

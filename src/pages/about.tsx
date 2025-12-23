@@ -2,9 +2,48 @@ import * as React from "react"
 import Layout from "@lekoarts/gatsby-theme-minimal-blog/src/components/layout"
 import Seo from "@lekoarts/gatsby-theme-minimal-blog/src/components/seo"
 import { Text, Box, Flex } from "theme-ui"
+import { graphql, useStaticQuery } from "gatsby"
 import GoodreadsWidget from "../components/GoodreadsWidget"
+import GithubContributionHeatmap, {
+  type ContributionCalendar,
+} from "../components/GithubContributionHeatmap"
+
+type ContributionsQueryResult = {
+  allGithubContributionCalendar: {
+    nodes: ContributionCalendar[]
+  }
+}
 
 const About = () => {
+  const contributionData = useStaticQuery<ContributionsQueryResult>(graphql`
+    query AboutPageContributions {
+      allGithubContributionCalendar {
+        nodes {
+          login
+          totalContributions
+          updatedAt
+          totalCommitContributions
+          totalPullRequestContributions
+          totalPullRequestReviewContributions
+          totalIssueContributions
+          restrictedContributionsCount
+          hasAnyRestrictedContributions
+          weeks {
+            firstDay
+            contributionDays {
+              date
+              color
+              contributionCount
+              contributionLevel
+            }
+          }
+        }
+      }
+    }
+  `)
+
+  const contributionCalendar = contributionData.allGithubContributionCalendar.nodes[0] ?? null
+
   // Add target="_blank" to external links in header
   React.useEffect(() => {
     const headerLinks = document.querySelectorAll('header a[href^="http"]');
@@ -64,9 +103,35 @@ const About = () => {
         </Text>
       </Box>
 
-      {/* Goodreads Widget */}
-      <Box sx={{ mb: [4, 5], mt: [4, 5], display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ mt: [5, 6] }}>
+        <Flex
+          sx={{
+            gap: [4, 5],
+            flexDirection: ['column', 'row'],
+            alignItems: ['stretch', 'flex-start'],
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 280 }}>
+            {contributionCalendar ? (
+              <GithubContributionHeatmap calendar={contributionCalendar} />
+            ) : (
+              <Text sx={{ fontSize: 1, color: 'muted' }}>
+                Unable to load GitHub activity right now.
+              </Text>
+            )}
+          </Box>
+
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 280,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
         <GoodreadsWidget />
+          </Box>
+        </Flex>
       </Box>
     </Layout>
   )

@@ -111,16 +111,6 @@ const About = () => {
             alignItems: ['stretch', 'flex-start'],
           }}
         >
-          <Box sx={{ flex: 1, minWidth: 280 }}>
-            {contributionCalendar ? (
-              <GithubContributionHeatmap calendar={contributionCalendar} />
-            ) : (
-              <Text sx={{ fontSize: 1, color: 'muted' }}>
-                Unable to load GitHub activity right now.
-              </Text>
-            )}
-          </Box>
-
           <Box
             sx={{
               flex: 1,
@@ -129,7 +119,17 @@ const About = () => {
               justifyContent: 'center',
             }}
           >
-        <GoodreadsWidget />
+            <GoodreadsWidget />
+          </Box>
+
+          <Box sx={{ flex: 1, minWidth: 280 }}>
+            {contributionCalendar ? (
+              <GithubContributionHeatmap calendar={contributionCalendar} />
+            ) : (
+              <Text sx={{ fontSize: 1, color: 'muted' }}>
+                Unable to load GitHub activity right now.
+              </Text>
+            )}
           </Box>
         </Flex>
       </Box>

@@ -1,4 +1,4 @@
-name: Update GitHub contributions
+name: deploy-latest-data-and-source
 
 on:
   schedule:

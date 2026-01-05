@@ -2,8 +2,6 @@
 import { jsx } from "theme-ui"
 
 const Footer = () => {
-  console.log("CUSTOM FOOTER COMPONENT IS BEING USED!")
-
   return (
     <footer
       sx={{

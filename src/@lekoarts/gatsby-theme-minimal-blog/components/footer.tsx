@@ -5,8 +5,6 @@ import useSiteMetadata from "@lekoarts/gatsby-theme-minimal-blog/src/hooks/use-s
 
 const Footer = () => {
   const { siteTitle } = useSiteMetadata()
-  
-  console.log("CUSTOM FOOTER COMPONENT IS BEING USED!")
 
   return (
     <footer

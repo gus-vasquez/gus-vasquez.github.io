@@ -8,6 +8,7 @@ import Header from "@lekoarts/gatsby-theme-minimal-blog/src/components/header"
 import Footer from "./footer"
 import CodeStyles from "@lekoarts/gatsby-theme-minimal-blog/src/styles/code"
 import SkipNavLink from "@lekoarts/gatsby-theme-minimal-blog/src/components/skip-nav"
+import "katex/dist/katex.min.css"
 
 type LayoutProps = { children: React.ReactNode; className?: string }
 

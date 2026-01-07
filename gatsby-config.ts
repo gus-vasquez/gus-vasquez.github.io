@@ -152,6 +152,23 @@ const config: GatsbyConfig = {
         ],
       },
     },
+    {
+      resolve: `gatsby-plugin-google-gtag`,
+      options: {
+        trackingIds: [
+          process.env.GATSBY_GA_MEASUREMENT_ID,
+        ].filter(Boolean),
+        pluginConfig: {
+          head: true,
+          respectDNT: true,
+          exclude: [],
+        },
+        gtagConfig: {
+          anonymize_ip: true,
+          cookie_expires: 0,
+        },
+      },
+    },
     // You can remove this plugin if you don't need it
     shouldAnalyseBundle && {
       resolve: `gatsby-plugin-webpack-statoscope`,

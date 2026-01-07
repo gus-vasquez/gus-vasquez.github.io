@@ -15,17 +15,6 @@ interface BlogQuery {
 const Blog = ({ data }: PageProps<BlogQuery>) => {
   const posts = data.posts.nodes
 
-  // Add target="_blank" to external links in header
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const headerLinks = document.querySelectorAll('header a[href^="http"]');
-    headerLinks.forEach((link) => {
-      const anchorLink = link as HTMLAnchorElement;
-      anchorLink.setAttribute('target', '_blank');
-      anchorLink.setAttribute('rel', 'noopener noreferrer');
-    });
-  }, []);
-
   return (
     <Layout>
       <Seo title="Blog" />

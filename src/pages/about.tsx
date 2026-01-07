@@ -1,4 +1,5 @@
 import * as React from "react"
+import { HeadFC } from "gatsby"
 import Layout from "@lekoarts/gatsby-theme-minimal-blog/src/components/layout"
 import Seo from "@lekoarts/gatsby-theme-minimal-blog/src/components/seo"
 import { Text, Box, Flex } from "theme-ui"
@@ -46,7 +47,6 @@ const About = () => {
 
   return (
     <Layout>
-      <Seo title="About" />
       <Text as="h1" sx={{ fontSize: [4, 5, 6], fontWeight: 'bold', color: 'heading', mb: [4, 5] }}>
         About
       </Text>
@@ -128,3 +128,5 @@ const About = () => {
 }
 
 export default About
+
+export const Head: HeadFC = () => <Seo title="About" />

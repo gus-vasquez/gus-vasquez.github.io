@@ -34,7 +34,9 @@ const renderMath = () => {
             })
             const span = document.createElement("span")
             span.innerHTML = mathHtml
-            codeEl.parentNode.replaceChild(span, codeEl)
+            if (codeEl.parentNode) {
+              codeEl.parentNode.replaceChild(span, codeEl)
+            }
           } catch (e) {
             // Silently fail - leave as is
           }
@@ -120,7 +122,12 @@ const renderMath = () => {
 
             const parentToReplace = codeBlock.parentElement
             if (parentToReplace?.parentNode) {
-              parentToReplace.parentNode.replaceChild(wrapper, parentToReplace)
+              // Delay replacement to avoid hydration issues
+              setTimeout(() => {
+                if (parentToReplace?.parentNode) {
+                  parentToReplace.parentNode.replaceChild(wrapper, parentToReplace)
+                }
+              }, 0)
             }
           } catch (e) {
             // Silently fail - not valid LaTeX
@@ -132,10 +139,13 @@ const renderMath = () => {
 }
 
 // Run renderMath with delays to catch content loaded at different times
+// Use longer delays to ensure React hydration is complete
 const runRenderMath = () => {
-  setTimeout(renderMath, 100)
+  if (typeof window === "undefined") return
+  // Wait for React to fully hydrate before manipulating DOM
   setTimeout(renderMath, 500)
-  setTimeout(renderMath, 1500)
+  setTimeout(renderMath, 1000)
+  setTimeout(renderMath, 2000)
 }
 
 // Run on route change

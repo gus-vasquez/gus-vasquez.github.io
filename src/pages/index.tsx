@@ -1,5 +1,5 @@
 import * as React from "react"
-import { graphql, PageProps } from "gatsby"
+import { graphql, PageProps, HeadFC } from "gatsby"
 import { Link } from "gatsby"
 import Layout from "@lekoarts/gatsby-theme-minimal-blog/src/components/layout"
 import Listing from "@lekoarts/gatsby-theme-minimal-blog/src/components/listing"
@@ -21,8 +21,6 @@ const Index = ({ data }: PageProps<IndexQuery>) => {
 
   return (
     <Layout>
-      <Seo title="Home" />
-      
       {/* Welcome Section */}
       <Box sx={{ mb: [5, 6], p: { fontSize: [1, 2, 3], mt: 2 }, variant: `section_hero` }}>
         <Flex sx={{ alignItems: 'center', gap: 4, flexDirection: ['column', 'row'] }}>
@@ -140,6 +138,8 @@ const Index = ({ data }: PageProps<IndexQuery>) => {
 }
 
 export default Index
+
+export const Head: HeadFC = () => <Seo title="Home" />
 
 export const query = graphql`
   query Index {

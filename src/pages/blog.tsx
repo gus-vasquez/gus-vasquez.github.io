@@ -1,5 +1,5 @@
 import * as React from "react"
-import { graphql, PageProps } from "gatsby"
+import { graphql, PageProps, HeadFC } from "gatsby"
 import { Link } from "gatsby"
 import Layout from "@lekoarts/gatsby-theme-minimal-blog/src/components/layout"
 import Listing from "@lekoarts/gatsby-theme-minimal-blog/src/components/listing"
@@ -17,7 +17,6 @@ const Blog = ({ data }: PageProps<BlogQuery>) => {
 
   return (
     <Layout>
-      <Seo title="Blog" />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
         <Text as="h1" sx={{ fontSize: [4, 5, 6], fontWeight: 'bold', color: 'heading', m: 0 }}>Blog</Text>
         <Link 
@@ -37,6 +36,8 @@ const Blog = ({ data }: PageProps<BlogQuery>) => {
 }
 
 export default Blog
+
+export const Head: HeadFC = () => <Seo title="Blog" />
 
 export const query = graphql`
   query Blog {

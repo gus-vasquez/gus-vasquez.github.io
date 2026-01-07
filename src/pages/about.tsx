@@ -46,6 +46,7 @@ const About = () => {
 
   // Add target="_blank" to external links in header
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
     const headerLinks = document.querySelectorAll('header a[href^="http"]');
     headerLinks.forEach((link) => {
       const anchorLink = link as HTMLAnchorElement;

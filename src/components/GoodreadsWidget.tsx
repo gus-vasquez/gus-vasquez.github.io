@@ -2,6 +2,8 @@ import * as React from "react"
 
 const GoodreadsWidget: React.FC = (): JSX.Element => {
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     // Load the Goodreads script
     const script = document.createElement('script')
     script.src = 'https://www.goodreads.com/review/custom_widget/187073912.Books%20in%20Progress?cover_position=left&cover_size=medium&num_books=5&order=a&shelf=currently-reading&show_author=1&show_cover=1&show_rating=1&show_review=1&show_tags=1&show_title=1&sort=date_added&widget_bg_color=FFFFFF&widget_bg_transparent=true&widget_border_width=2&widget_id=1757474327&widget_text_color=FFFFFF&widget_title_size=large&widget_width=medium'
@@ -13,7 +15,7 @@ const GoodreadsWidget: React.FC = (): JSX.Element => {
     
     // Cleanup function
     return () => {
-      if (document.head.contains(script)) {
+      if (typeof window !== 'undefined' && document.head.contains(script)) {
         document.head.removeChild(script)
       }
     }

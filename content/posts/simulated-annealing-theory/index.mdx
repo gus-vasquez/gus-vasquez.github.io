@@ -9,16 +9,85 @@ tags:
   - mathematics
   - physics
 ---
-
 ## Introduction
 
-Optimization problems are everywhere: finding the shortest route, minimizing energy in physical systems, training neural networks, or designing efficient algorithms. Yet many optimization problems share a common challenge: **local minima**. A greedy algorithm that always moves downhill will get stuck in the first valley it finds, never discovering deeper valleys that might contain the true global minimum.
+The idea of **[Simulated Annealing](https://en.wikipedia.org/wiki/Simulated_annealing)** (SA) has always fascinated me. The concept behind it (borrowed from physics known for perhaps millennia) is quite simple: **cool slowly and you'll get optimization**. Unfortunately, I never had the chance to delve into the mathematics or physics behind this algorithm.
 
-Nature, however, has solved this problem through **thermal annealing**. When a metal is heated and then slowly cooled, its atoms explore many configurations at high temperature, then gradually settle into a low-energy crystalline structure as the temperature decreases. The key insight is that **thermal fluctuations allow the system to escape local minima**—at high temperature, the system can jump over energy barriers that would be insurmountable at low temperature.
+I want this blog post to give a glimpse of the math and physics that support the intuition. I also prepared a [project post](/simulated-annealing-ising-model-project) that applies the algorithm to the **Ising model**: a classical but fascinating application.
 
-**Simulated Annealing** (SA) is an optimization algorithm that mimics this physical process. By introducing a "temperature" parameter that controls the probability of accepting worse solutions, SA balances **exploration** (searching broadly) and **exploitation** (refining good solutions). As the temperature decreases, the algorithm transitions from exploration to exploitation, ideally finding the global minimum.
+But why does this work? What guarantees do we have? This article explores the **mathematical foundations** of Simulated Annealing, showing how it emerges from fundamental principles of **[statistical mechanics](https://en.wikipedia.org/wiki/Statistical_mechanics)** and how theoretical results guarantee its convergence under certain conditions.
 
-But why does this work? What guarantees do we have? This article explores the **mathematical foundations** of Simulated Annealing, showing how it emerges from fundamental principles of statistical mechanics and how theoretical results guarantee its convergence under certain conditions.
+We will start by understanding the **[Boltzmann distribution](https://en.wikipedia.org/wiki/Boltzmann_distribution)**, from which SA was inspired. Then, we will take a deep dive into the **[Metropolis algorithm](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm)**, which is the core of the SA algorithm. Finally, we will explore the **convergence theorem**, which guarantees the convergence of the algorithm.
+
+---
+
+### The Boltzmann Distribution
+
+Let's start from the building blocks. At the heart of Simulated Annealing lies the **[Boltzmann distribution](https://en.wikipedia.org/wiki/Boltzmann_distribution)**, which describes the probability (denoted as `$P$`) of finding a physical system in a state with energy `$E$` at temperature `$T$`:
+
+```
+P(E) \propto e^{-E/T}
+```
+
+This distribution is fundamental to both statistical mechanics and optimization. What does it tell us?
+- **High temperature**: All states are roughly equally likely → system explores freely
+- **Low temperature**: Low-energy states are much more likely → system concentrates near minima
+
+But why is this the correct distribution? There are several ways to derive it, each providing different insights. We'll focus on the **Detailed Balance at Equilibrium Approach**, which directly connects to how the **Metropolis algorithm** works.
+
+#### Detailed Balance at Equilibrium Approach (Deep Dive)
+
+At thermal equilibrium, a system must satisfy **[detailed balance](https://en.wikipedia.org/wiki/Detailed_balance)**. This means that the rate of transitions from state `$i$` to `$j$` equals the rate from `$j$` to `$i$`:
+
+```
+P(i) \cdot w(i \to j) = P(j) \cdot w(j \to i)
+```
+
+where `$w(i \to j)$` is the transition rate from state `$i$` to state `$j$`.
+
+**For thermal systems**, transition rates typically satisfy **Arrhenius-like behavior**:
+
+```
+w(i \to j) / w(j \to i) = e^{-(E_j - E_i)/T}
+```
+
+**Wait, what is Arrhenius-like Behavior?**
+
+The **[Arrhenius equation](https://en.wikipedia.org/wiki/Arrhenius_equation)** (named after Svante Arrhenius, 1889) describes how reaction/transition rates depend on temperature and energy barriers. It's both **theoretically motivated** and **experimentally validated**.
+
+The original Arrhenius equation for chemical reactions is:
+```
+k = A e^{-E_a / (RT)}
+```
+
+where `$k$` is the transition rate, `$E_a$` is the activation energy (energy barrier), `$R$` is the gas constant, and `$T$` is temperature.
+
+**Physical Interpretation**: 
+- To transition from state `$i$` to state `$j$`, the system must overcome an energy barrier
+- The probability of having enough thermal energy to overcome the barrier is proportional to `$e^{-\Delta E/T}$`
+- Higher temperature → more thermal energy → higher transition rate
+- Larger energy barrier → less likely to overcome → lower transition rate
+
+**The Result**: From detailed balance and Arrhenius-like behavior, we get:
+
+```
+P(i) \cdot w(i \to j) = P(j) \cdot w(j \to i)
+```
+
+```
+P(i) \cdot w(i \to j) = P(j) \cdot w(i \to j) \cdot e^{-(E_j - E_i)/T}
+```
+Rearranging and simplifying:
+
+```
+\frac{P(i)}{P(j)} = e^{-(E_i - E_j)/T}
+```
+
+This immediately leads to the **Boltzmann distribution**!
+
+```
+P(i) \propto e^{-E_i/T}
+```
 
 ---
 
@@ -44,93 +113,15 @@ The Metropolis algorithm solves this by **probabilistically accepting uphill mov
 
 > **At high temperature, we explore widely. At low temperature, we exploit what we've found.**
 
-This balance between exploration and exploitation is what makes SA powerful. But where does this probabilistic rule come from? The answer lies in **statistical mechanics** and the **Boltzmann distribution**.
-
----
-
-### The Boltzmann Distribution
-
-At the heart of Simulated Annealing lies the **Boltzmann distribution**, which describes the probability of finding a physical system in a state with energy `$E$` at temperature `$T$`:
-
-```
-P(E) \propto e^{-E/T}
-```
-
-This distribution is fundamental to both statistical mechanics and optimization. It tells us that:
-- **High temperature**: All states are roughly equally likely → system explores freely
-- **Low temperature**: Low-energy states are much more likely → system concentrates near minima
-- **`$T \to 0$`**: Only the minimum energy state has non-zero probability → pure optimization
-
-But why is this the correct distribution? There are several ways to derive it, each providing different insights. We'll focus on **Approach 3: Detailed Balance at Equilibrium**, which directly connects to how the Metropolis algorithm works.
-
-#### Approach 3: Detailed Balance at Equilibrium (Deep Dive)
-
-At thermal equilibrium, a system must satisfy **detailed balance**: the rate of transitions from state `$i$` to `$j$` equals the rate from `$j$` to `$i$`:
-
-```
-P(i) \cdot w(i \to j) = P(j) \cdot w(j \to i)
-```
-
-where `$w(i \to j)$` is the transition rate from state `$i$` to state `$j$`.
-
-**For thermal systems**, transition rates typically satisfy **Arrhenius-like behavior**:
-
-```
-w(i \to j) / w(j \to i) = e^{-(E_j - E_i)/T}
-```
-
-**What is Arrhenius-like Behavior?**
-
-The **Arrhenius equation** (named after Svante Arrhenius, 1889) describes how reaction/transition rates depend on temperature and energy barriers. It's both **theoretically motivated** and **experimentally validated**.
-
-The original Arrhenius equation for chemical reactions is:
-```
-k = A e^{-E_a / (RT)}
-```
-
-where `$E_a$` is the activation energy (energy barrier), `$R$` is the gas constant, and `$T$` is temperature.
-
-**Physical Interpretation**: 
-- To transition from state `$i$` to state `$j$`, the system must overcome an energy barrier
-- The probability of having enough thermal energy to overcome the barrier is proportional to `$e^{-\Delta E/T}$`
-- Higher temperature → more thermal energy → higher transition rate
-- Larger energy barrier → less likely to overcome → lower transition rate
-
-**The Result**: From detailed balance and Arrhenius-like behavior, we get:
-
-```
-P(i) \cdot w(i \to j) = P(j) \cdot w(j \to i)
-```
-
-```
-P(i) \cdot w(i \to j) = P(j) \cdot w(i \to j) \cdot e^{-(E_j - E_i)/T}
-```
-
-Dividing both sides by `$w(i \to j)$`:
-
-```
-P(i) = P(j) \cdot e^{-(E_j - E_i)/T}
-```
-
-Rearranging:
-
-```
-\frac{P(i)}{P(j)} = e^{-(E_i - E_j)/T}
-```
-
-This immediately gives us the **Boltzmann distribution**:
-
-```
-P(i) \propto e^{-E_i/T}
-```
-
-**Physical Interpretation**: At equilibrium, the system is in a steady state where energy flows balance out, leading to the exponential energy dependence. States with lower energy are exponentially more probable, but higher-energy states are still accessible (especially at high temperature).
+This balance between exploration and exploitation is what makes SA powerful.
 
 ---
 
 ### The Metropolis Algorithm: How It Works
 
 Now that we understand the Boltzmann distribution, we can see how the Metropolis algorithm samples from it.
+
+The algorithm works by constructing a **[Markov chain](https://en.wikipedia.org/wiki/Markov_chain)**: a sequence of states where each new state depends only on the current one. Under the right conditions, this chain converges to the Boltzmann distribution (see [stationary distribution](https://en.wikipedia.org/wiki/Discrete-time_Markov_chain#Stationary_distributions)), which is exactly what we want.
 
 The Metropolis algorithm has two key components:
 
@@ -141,7 +132,7 @@ The **proposal probability** `$q(x'|x)$` is the probability of proposing state `
 **Key Properties:**
 - **Symmetry**: `$q(x'|x) = q(x|x')$` (equal probability to propose `$x'$` from `$x$` as `$x$` from `$x'$`)
 - **Normalization**: `$\sum_{x'} q(x'|x) = 1$` (must define a valid probability distribution)
-- **Accessibility**: For any two states, there should be a path of proposals connecting them (ensures ergodicity)
+- **Accessibility**: For any two states, there should be a path of proposals connecting them (ensures [ergodicity](https://en.wikipedia.org/wiki/Ergodicity))
 
 **Examples of symmetric proposals:**
 - **Gaussian random walk**: `$x' = x + \mathcal{N}(0, \sigma^2)$` → symmetric because Gaussian is symmetric
@@ -212,7 +203,7 @@ Since `$q(x'|x) = q(x|x')$` (symmetry) and `$\pi(x') = \pi(x) e^{-\Delta E/T}$` 
 
 Right side: `$\pi(x) e^{-\Delta E/T} \cdot q(x'|x) \cdot e^{+\Delta E/T} = \pi(x) q(x'|x)$`
 
-Therefore: `$\pi(x) P(x \to x') = \pi(x') P(x' \to x)$` ✓
+Therefore: `$\pi(x) P(x \to x') = \pi(x') P(x' \to x)$` ✔
 
 **Case 2: Uphill Move (`$\Delta E > 0$`, i.e., `$E(x') > E(x)$`)**
 
@@ -230,43 +221,9 @@ Since `$\pi(x') = \pi(x) e^{-\Delta E/T}$` and `$q(x'|x) = q(x|x')$`, we get:
 
 Right side: `$\pi(x) e^{-\Delta E/T} \cdot q(x'|x) = \pi(x) q(x'|x) e^{-\Delta E/T}$`
 
-Therefore: `$\pi(x) P(x \to x') = \pi(x') P(x' \to x)$` ✓
+Therefore: `$\pi(x) P(x \to x') = \pi(x') P(x' \to x)$` ✔
 
-**Conclusion**: The Metropolis algorithm satisfies detailed balance for both downhill and uphill moves, ensuring convergence to the Boltzmann distribution.
-
----
-
-### Proposal Probability: Why It Matters
-
-The **proposal probability** `$q(x'|x)$` plays a crucial role in the Metropolis algorithm. Let's understand why.
-
-#### Why Symmetry Matters
-
-The symmetry condition `$q(x'|x) = q(x|x')$` is essential for the detailed balance proof to work. Without it, we would need a different acceptance rule (like in Metropolis-Hastings algorithm).
-
-**Intuition**: If proposing `$x'$` from `$x$` is equally likely as proposing `$x$` from `$x'$`, then the proposal mechanism doesn't introduce any bias. The acceptance rule can then focus solely on the energy difference.
-
-#### Examples of Symmetric Proposals
-
-1. **Gaussian Random Walk**: `$x' = x + \mathcal{N}(0, \sigma^2)$`
-   - Symmetric because the Gaussian distribution is symmetric around zero
-   - Common for continuous optimization problems
-
-2. **Uniform Random Move**: `$x' = x + \text{Uniform}(-\delta, \delta)$`
-   - Symmetric because uniform distribution is symmetric
-   - Simple and effective for many problems
-
-3. **Swap Operations**: In discrete problems (like TSP), swapping two elements
-   - Symmetric because swapping back is equally likely
-   - Preserves problem structure
-
-#### Non-Symmetric Proposals
-
-Some proposals are not symmetric, such as:
-- **Langevin dynamics**: `$x' = x - \epsilon \nabla E(x) + \sqrt{2\epsilon} \xi$` (gradient-based)
-- **Hamiltonian Monte Carlo**: Uses momentum (not symmetric)
-
-These require the **Metropolis-Hastings algorithm**, which uses a modified acceptance rule to account for the asymmetry. The key insight is that the acceptance probability must compensate for the proposal bias.
+**Conclusion**: The Metropolis algorithm satisfies detailed balance for both downhill and uphill moves, ensuring convergence to the Boltzmann distribution!
 
 ---
 
@@ -274,12 +231,9 @@ These require the **Metropolis-Hastings algorithm**, which uses a modified accep
 
 ### The Key Idea
 
-The Metropolis algorithm at **fixed temperature** samples from the Boltzmann distribution at that temperature. This is useful for understanding equilibrium properties, but not for optimization.
+The Metropolis algorithm at **fixed temperature** samples from the Boltzmann distribution at that temperature. This is useful for understanding equilibrium properties in physics, but not for optimization.
 
 **Simulated Annealing** makes a crucial modification: **decrease the temperature over time**. This transforms the algorithm from a sampling method into an optimization method.
-
-- **Fixed temperature**: Samples equilibrium distribution → exploration but no convergence to minimum
-- **Decreasing temperature**: Transitions from exploration to exploitation → optimization algorithm
 
 **SA as Non-Stationary Markov Chain**: Since the temperature changes with iteration `$k$`, the acceptance probabilities change over time. This makes SA a **time-inhomogeneous** (non-stationary) Markov process, unlike fixed-temperature Metropolis which is stationary.
 
@@ -291,11 +245,9 @@ There's a beautiful theoretical result about Simulated Annealing, first rigorous
 
 > **If we cool infinitely slowly** (i.e., `$T(k) \to 0$` as `$k \to \infty$` in a specific way), **SA is guaranteed to find the global minimum with probability 1.**
 
-**The catch**: "Infinitely slow" means we'd need infinite time! In practice, we need **finite-time schedules** that balance convergence quality and computational cost.
-
 #### Formal Statement (Hajek's Theorem, 1988)
 
-Under certain conditions on the energy landscape and proposal mechanism, if the temperature schedule satisfies:
+Under certain conditions on the energy landscape (the function that we want to optimize) and proposal mechanism, if the temperature schedule satisfies:
 
 ```
 T(k) \geq \frac{C}{\log(k+1)}
@@ -344,43 +296,38 @@ where `$\Delta E_{\max}$` is the **largest energy barrier** in the landscape.
 
 **How the Logarithmic Schedule Ensures Equilibrium**
 
-For the logarithmic schedule `$T(k) = C/\log(k+1)$`, the number of iterations spent "near" temperature `$T$` is approximately:
-
+For the logarithmic schedule `$T(k) = C/\log(k+1)$`, we want to know the number of iterations `$\Delta k$` spent in a small temperature range around `$T$`. Using the linear approximation (since `$\Delta T$` is small), we get:
 ```
-\text{iterations at } T \approx \left|\frac{dk}{dT}\right| \cdot \Delta T
+\Delta k \approx \left|\frac{dk}{dT}\right| \cdot \Delta T
 ```
 
-where `$\frac{dk}{dT} = -\frac{C}{T^2} e^{C/T}$`.
-
-**The magic**: This gives us:
+where `$\frac{dk}{dT} = -\frac{C}{T^2} e^{C/T}$`. This gives us:
 ```
-\text{iterations at } T \propto \frac{C}{T^2} e^{C/T}
+\Delta k \propto \frac{C}{T^2} e^{C/T}
 ```
 
 For small `$T$` (low temperatures), the exponential term `$e^{C/T}$` **dominates**, so:
 ```
-\text{iterations at } T \propto e^{C/T}
+\Delta k \propto e^{C/T}
 ```
 
-But we need `$\tau_{\text{mix}}(T) \propto e^{\Delta E_{\max}/T}$` iterations.
+But remember, we need `$\tau_{\text{mix}}(T) \propto e^{\Delta E_{\max}/T}$` iterations.
 
-**How does logarithmic work?** The key is that we need to choose `$C$` **large enough**:
+**How does logarithmic schedule work?** The key is that we need to choose `$C$` **large enough**:
 ```
 C \geq \Delta E_{\max}
 ```
 
 When this holds, the logarithmic schedule ensures we spend **exponentially many iterations** at each temperature level, which is exactly what we need to overcome the exponential mixing time!
 
-**Intuitive Explanation**: The logarithmic schedule cools so slowly that at each temperature, the system has enough time to reach equilibrium before the temperature decreases further. This allows the system to escape local minima through thermal fluctuations, eventually finding the global minimum.
-
 #### Physical Interpretation
 
-This result beautifully mirrors **physical annealing**:
+This result beautifully mirrors **[physical annealing](https://en.wikipedia.org/wiki/Annealing_(materials_science))**:
 - In real annealing, you cool metal slowly to avoid defects (trapped states)
 - The cooling rate must be slower than the **relaxation time** of the material
 - SA's logarithmic schedule ensures we cool slower than the "relaxation time" (mixing time) of the optimization problem
 
-**The Trade-off**: Theory vs. Practice
+**The Theory vs. Practice trade-off**:
 
 Logarithmic schedules are **too slow** for most applications. The requirement `$T(k) \geq C/\log(k+1)$` means:
 - To reach `$T = 0.1$` from `$T_0 = 10$` with `$C = 10$`, we need `$k \approx e^{100} \approx 10^{43}$` iterations!
@@ -394,27 +341,21 @@ In practice, we use **faster schedules** that sacrifice theoretical guarantees f
 
 Since logarithmic schedules are impractical, several **finite-time schedules** are commonly used:
 
-#### 1. Logarithmic Schedule: `$T(k) = \frac{C}{\log(k+k_0)}$`
-
-- **Pros**: Theoretical guarantee of convergence
-- **Cons**: Extremely slow, computationally infeasible
-- **Use**: Rarely used in practice, mainly of theoretical interest
-
-#### 2. Geometric Schedule: `$T_{k+1} = \alpha T_k$`
+#### 1. Geometric Schedule: `$T_{k+1} = \alpha T_k$`
 
 - **Pros**: Simple, widely used, good performance in practice
 - **Cons**: No theoretical guarantee
 - **Typical values**: `$\alpha = 0.90$` to `$0.99$` (higher = slower cooling)
 - **Use**: Most common choice for practical applications
 
-#### 3. Adaptive Schedule: Adjusts based on acceptance rate
+#### 2. Adaptive Schedule: Adjusts based on acceptance rate
 
 - **Pros**: Adapts to problem characteristics, can be more efficient
 - **Cons**: More complex, requires tuning
 - **Idea**: Maintain target acceptance rate (e.g., 40%) by adjusting cooling rate
 - **Use**: When problem characteristics are unknown or vary
 
-**Comparison**: Geometric schedules are the most popular because they offer a good balance between simplicity and performance, even without theoretical guarantees.
+**Note**: The logarithmic schedule (discussed in detail above) provides theoretical guarantees but is computationally infeasible for practical applications.
 
 ---
 
@@ -428,10 +369,6 @@ Simulated Annealing bridges the gap between physics and optimization, showing ho
 2. **Detailed Balance**: The mathematical guarantee that ensures convergence to the target distribution
 3. **The Convergence Theorem**: Infinitely slow cooling guarantees finding the global minimum, though practical schedules sacrifice this guarantee for efficiency
 4. **Physical Intuition**: SA mimics real annealing, where slow cooling allows systems to find low-energy configurations
-
-**Why SA Works**: The combination of mathematical rigor (detailed balance, convergence theorems) and physical intuition (thermal fluctuations, escape from local minima) makes SA both theoretically sound and practically effective.
-
-While the theoretical logarithmic schedule is too slow for most applications, understanding it provides deep insights into why SA works and how to design effective practical schedules.
 
 ---
 

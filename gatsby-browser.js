@@ -1,7 +1,7 @@
 // Client-side math rendering using KaTeX
 // This processes math expressions after MDX renders the content
 import katex from "katex"
-import "katex/dist/katex.min.css"
+/* KaTeX CSS is imported once in shadowed layout.tsx */
 
 const renderMath = () => {
   if (typeof window === "undefined") return
@@ -83,7 +83,7 @@ const renderMath = () => {
             text.includes("\\rangle") ||
             text.includes("\\text") ||
             text.match(/\\[a-zA-Z]+/))
-        
+
         // Math notation: subscripts/superscripts with curly braces (e.g., e^{-E_a / (RT)})
         const hasMathNotation = (text.includes("^") || text.includes("_")) && /[{}]/.test(text)
         const isMath = hasLaTeXCommand || hasMathNotation
@@ -114,10 +114,8 @@ const renderMath = () => {
             codeBlock.dataset.mathRendered = "true"
 
             const wrapper = document.createElement("div")
-            wrapper.style.textAlign = "center"
-            wrapper.style.margin = "1em 0"
-            wrapper.style.overflowX = "auto"
-            wrapper.className = "katex-display"
+            /* Unique panel class: KaTeX also emits `.katex-display` on the inner root, so do not reuse it here */
+            wrapper.className = "math-display-panel"
             wrapper.innerHTML = mathHtml
 
             const parentToReplace = codeBlock.parentElement

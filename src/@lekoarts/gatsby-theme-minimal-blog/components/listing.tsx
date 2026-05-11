@@ -2,21 +2,10 @@
 import { jsx } from "theme-ui"
 import type { ThemeUIStyleObject } from "theme-ui"
 import BlogListItem from "./blog-list-item"
+import type { BlogListItemPost } from "./blog-list-item"
 
 type ListingProps = {
-  posts: {
-    slug: string
-    title: string
-    date: string
-    excerpt: string
-    description: string
-    timeToRead?: number
-    pinned?: boolean
-    tags?: {
-      name: string
-      slug: string
-    }[]
-  }[]
+  posts: BlogListItemPost[]
   className?: string
   showTags?: boolean
   sx?: ThemeUIStyleObject

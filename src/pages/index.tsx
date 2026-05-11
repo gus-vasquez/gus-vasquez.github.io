@@ -5,6 +5,7 @@ import Layout from "@lekoarts/gatsby-theme-minimal-blog/src/components/layout"
 import Listing from "@lekoarts/gatsby-theme-minimal-blog/src/components/listing"
 import Seo from "@lekoarts/gatsby-theme-minimal-blog/src/components/seo"
 import { Text, Box, Flex } from "theme-ui"
+import { sortPostsWithPinnedFirst } from "../utils/sort-posts-with-pinned"
 
 interface IndexQuery {
   blogPosts: {
@@ -16,8 +17,12 @@ interface IndexQuery {
 }
 
 const Index = ({ data }: PageProps<IndexQuery>) => {
-  const blogPosts = data.blogPosts.nodes
-  const projectPosts = data.projectPosts.nodes
+  const blogPosts = sortPostsWithPinnedFirst(data.blogPosts.nodes)
+    .slice(0, 3)
+    .map(({ fields, ...post }) => ({ ...post, pinned: fields?.pinned ?? false }))
+  const projectPosts = sortPostsWithPinnedFirst(data.projectPosts.nodes)
+    .slice(0, 3)
+    .map(({ fields, ...post }) => ({ ...post, pinned: fields?.pinned ?? false }))
 
   return (
     <Layout>
@@ -146,9 +151,10 @@ export const query = graphql`
     blogPosts: allPost(
       filter: { tags: { elemMatch: { name: { eq: "blog" } } } }
       sort: { date: DESC }
-      limit: 3
+      limit: 20
     ) {
       nodes {
+        sortDate: date
         slug
         title
         date(formatString: "MMMM D, YYYY")
@@ -164,14 +170,20 @@ export const query = graphql`
             small: gatsbyImageData(width: 760, quality: 90)
           }
         }
+        ... on MdxPost {
+          fields {
+            pinned
+          }
+        }
       }
     }
     projectPosts: allPost(
       filter: { tags: { elemMatch: { name: { eq: "project" } } } }
       sort: { date: DESC }
-      limit: 3
+      limit: 20
     ) {
       nodes {
+        sortDate: date
         slug
         title
         date(formatString: "MMMM D, YYYY")
@@ -185,6 +197,11 @@ export const query = graphql`
         banner {
           childImageSharp {
             small: gatsbyImageData(width: 760, quality: 90)
+          }
+        }
+        ... on MdxPost {
+          fields {
+            pinned
           }
         }
       }

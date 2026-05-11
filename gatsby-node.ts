@@ -201,3 +201,23 @@ export const sourceNodes: GatsbyNode["sourceNodes"] = async ({
     `[github-contributions] Breakdown — commits: ${nodeData.totalCommitContributions}, PRs: ${nodeData.totalPullRequestContributions}, reviews: ${nodeData.totalPullRequestReviewContributions}, issues: ${nodeData.totalIssueContributions}, restricted: ${restrictedCount}`,
   )
 }
+
+export const onCreateNode: GatsbyNode["onCreateNode"] = ({ node, actions, getNode }) => {
+  if (node.internal.type !== `MdxPost`) {
+    return
+  }
+
+  const mdx = node.parent ? getNode(node.parent) : undefined
+  if (!mdx || mdx.internal.type !== `Mdx`) {
+    return
+  }
+
+  const frontmatter = (mdx as { frontmatter?: { pinned?: unknown } }).frontmatter
+  const pinned = Boolean(frontmatter?.pinned)
+
+  actions.createNodeField({
+    node,
+    name: `pinned`,
+    value: pinned,
+  })
+}

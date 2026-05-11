@@ -5,6 +5,7 @@ import Layout from "@lekoarts/gatsby-theme-minimal-blog/src/components/layout"
 import Listing from "@lekoarts/gatsby-theme-minimal-blog/src/components/listing"
 import Seo from "@lekoarts/gatsby-theme-minimal-blog/src/components/seo"
 import { Text } from "theme-ui"
+import { sortPostsWithPinnedFirst } from "../utils/sort-posts-with-pinned"
 
 interface BlogQuery {
   posts: {
@@ -13,7 +14,10 @@ interface BlogQuery {
 }
 
 const Blog = ({ data }: PageProps<BlogQuery>) => {
-  const posts = data.posts.nodes
+  const posts = sortPostsWithPinnedFirst(data.posts.nodes).map(({ fields, ...post }) => ({
+    ...post,
+    pinned: fields?.pinned ?? false,
+  }))
 
   return (
     <Layout>
@@ -46,6 +50,7 @@ export const query = graphql`
       sort: { date: DESC }
     ) {
       nodes {
+        sortDate: date
         slug
         title
         date(formatString: "MMMM D, YYYY")
@@ -59,6 +64,11 @@ export const query = graphql`
         banner {
           childImageSharp {
             small: gatsbyImageData(width: 760, quality: 90)
+          }
+        }
+        ... on MdxPost {
+          fields {
+            pinned
           }
         }
       }

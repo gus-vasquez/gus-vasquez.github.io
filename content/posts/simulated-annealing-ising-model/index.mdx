@@ -1,7 +1,7 @@
 ---
 title: "Simulated Annealing: Ising Model Project"
 date: 2026-01-05
-description: "A hands-on project applying Simulated Annealing to the Ising Model, demonstrating optimization techniques, fast energy calculations, and the connection between physics and algorithms."
+description: "Hands-on Ising model + Metropolis validation, then simulated annealing in 3D: local energy updates, periodic boundaries, and checking physics before trusting the optimizer."
 tags:
   - project
   - optimization
@@ -9,17 +9,17 @@ tags:
   - physics
 ---
 
-> **Note:** For the theoretical foundations of Simulated Annealing, see the companion blog post: [Simulated Annealing: From Physics to Optimization](/simulated-annealing-from-physics-to-optimization/)
+> **Note:** The math behind the acceptance rule and cooling is in the companion post: [Simulated Annealing: From Physics to Optimization](/simulated-annealing-theory/).
 
 ## Project Overview
 
-This project demonstrates **Simulated Annealing** applied to the **Ising Model**: a classic problem in statistical physics that is an ideal testbed for Simulated Annealing
+I wanted something I could **run** and **break**: the Ising model is small enough to fit in a notebook, messy enough to feel real. Here is a brief summary of the project.
 
-**What You'll Learn:**
-- Why the Ising model is perfect for demonstrating SA
-- Onsager's exact solution for 2D Ising (one of the most beautiful results in physics)
-- Implementation techniques: fast energy calculation, periodic boundary conditions
-- How SA successfully optimizes the 3D Ising model
+First we run **Metropolis** at a **fixed temperature** and see if the transition sits near the known **`$T_c$`**. If that fails, we have a problem.
+
+Then we cool with **simulated annealing** on a **3D** lattice and hunt for a **low-energy** state. In 2D we have **Onsager’s number** to compare against; in 3D we mostly have **numerics**: so we lean on the code and the plots.
+
+Along the way: **local** `$\Delta E$` **updates**, **periodic boundaries**, and the same acceptance rule as in the theory post.
 
 ---
 
@@ -48,7 +48,7 @@ The **ground state** (minimum energy) is when **all spins are aligned**:
 - 2D: `$E_0 = -2JL^2$` (per spin: `$-2J$`)
 - 3D: `$E_0 = -3JL^3$` (per spin: `$-3J$`)
 
-This well-defined ground state makes it easy to evaluate how well SA performs.
+That gives us a simple scorecard when we run SA: how close did we get to **all spins aligned**?
 
 ### Observables
 
@@ -64,19 +64,14 @@ This well-defined ground state makes it easy to evaluate how well SA performs.
 - **Above `$T_c$`**: Disordered phase (low magnetization, higher energy)
 
 **Known critical temperatures:**
-- **2D**: Exact solution by Onsager (1944) — `$T_c / J = 2/\ln(1+\sqrt{2}) \approx 2.269$`
-- **3D**: Well-characterized numerically — `$T_c / J \approx 4.51$`
+- **2D**: Exact solution by Onsager (1944) `$T_c / J = 2/\ln(1+\sqrt{2}) \approx 2.269$`
+- **3D**: Well-characterized numerically `$T_c / J \approx 4.51$`
 
-### Why Ising Model is Perfect for SA
+### Why the Ising Model Fits This Project
 
-The Ising model serves as an **excellent benchmark** for Simulated Annealing because:
-
-1. **Clear optimization goal**: The ground state (all spins aligned) is known, making it easy to evaluate SA's performance
-2. **Many local minima**: Different spin configurations with varying energies create a challenging optimization landscape
-3. **Energy barriers**: The system needs thermal fluctuations to escape local minima, which is exactly what SA provides
-4. **Visualizable**: In 2D and 3D, we can visualize spin configurations, see domains form and grow, and observe how SA explores the energy landscape
-5. **Scalable**: We can study systems from small (`$L=8$`) for debugging to large (`$L=32+$`) for realistic physics
-6. **Well-characterized**: Extensive literature and known results (especially Onsager's exact 2D solution) provide validation benchmarks
+- **We know the bottom** in the ferromagnetic case (aligned spins), so we can tell if annealing helped or fooled us.
+- **The landscape is bumpy**: domains and walls mean local minima show up without asking for them.
+- **Each move should stay cheap**: updating one spin should not mean resumming the whole lattice (see [§3](#sec-implementation)).
 
 ---
 
@@ -84,76 +79,64 @@ The Ising model serves as an **excellent benchmark** for Simulated Annealing bec
 
 ### Onsager's Exact Solution
 
-The critical temperature for the 2D Ising model is a remarkable **exact result** derived by Lars Onsager in 1944:
+The 2D critical temperature is known in closed form (Onsager, 1944):
 
 ```
 T_c = \frac{2J}{\ln(1 + \sqrt{2})} \approx 2.269 J
 ```
 
-Most models require numerical methods or approximations, but Onsager's exact analytical solution reveals deep mathematical structure (the Onsager algebra) and provides a crucial benchmark for validating numerical methods. 
+That value is the reference we use later when we check fixed-temperature Metropolis in 2D.
 
-This is a good example of how hidden symmetries can make exact solutions possible.
+<details>
+  <summary><strong>Deep Dive (Optional): Transfer Matrix and Where `$T_c$` Comes From</strong></summary>
 
-### Sketch of Onsager's Solution
+  **Partition function**
 
-Onsager's solution uses the **transfer matrix method**, which reduces the 2D problem to a 1D eigenvalue problem. Here's the key idea:
+  Computing `$Z = \sum_{\{\mathbf{s}\}} e^{-E(\mathbf{s})/T}$` by brute force sums `$2^{L^2}$` terms is not feasible for large `$L$`. The transfer-matrix approach builds `$Z$` **row by row** instead of enumerating the full lattice at once.
 
-**The Challenge**: Computing the partition function `$Z = \sum_{\{\mathbf{s}\}} e^{-E(\mathbf{s})/T}$` requires summing over `$2^{L^2}$` configurations—impossible for large `$L$`!
+  **Transfer matrix**
 
-**The Breakthrough**: Instead of summing over all configurations at once, build the partition function **row by row** using a transfer matrix.
+  For an `$L \times L$` lattice, the transfer matrix `$T$` is `$2^L \times 2^L$`: rows/columns index possible **row** configurations, and `$T[i,j]$` stores the Boltzmann weight for transitioning from row `$i$` to row `$j$`.
 
-**The Transfer Matrix**:
-- For an `$L \times L$` lattice, the transfer matrix `$T$` is `$2^L \times 2^L$`
-- Each row/column corresponds to one of the `$2^L$` possible row configurations
-- Matrix element `$T[i,j]$` encodes the Boltzmann weight for transitioning from row configuration `$i$` to row configuration `$j$`
+  **Trace formula**
 
-**The Magic**: The partition function becomes:
-```
-Z = \text{Tr}(T^N) = \sum_{i=1}^{2^L} \lambda_i^N
-```
+  ```
+  Z = \text{Tr}(T^N) = \sum_{i=1}^{2^L} \lambda_i^N
+  ```
 
-where `$N$` is the number of rows and `$\lambda_i$` are eigenvalues of `$T$`.
+  where `$N$` is the number of rows and `$\lambda_i$` are eigenvalues of `$T$`.
 
-**Complexity Reduction**:
-- Direct sum: `$2^{L^2}$` terms (exponential in area)
-- Transfer matrix: `$2^L \times 2^L$` matrix (exponential in width, not area!)
+  **Complexity**
 
-**Finding `$T_c$`**: The critical temperature occurs when the largest eigenvalue becomes degenerate (two eigenvalues become equal). This requires solving the **Onsager algebra**—a non-commutative Lie algebra that describes the symmetries of the 2D Ising model.
+  - Direct sum: `$2^{L^2}$` (exponential in area).
+  - Transfer-matrix formulation: still exponential in the width `$L$`, but structured enough to attack analytically.
 
-**Why Onsager Algebra?** The transfer matrix can be written as `$T = V_1 V_2$` where `$V_1$` and `$V_2$` don't commute. The Onsager algebra provides the mathematical structure needed to diagonalize this and find the eigenvalues exactly.
+  **Critical point**
 
-**The Result**: After solving the Onsager algebra, the critical temperature emerges as:
-```
-T_c = \frac{2J}{\ln(1 + \sqrt{2})}
-```
+  `$T_c$` appears where the largest eigenvalue becomes degenerate (two eigenvalues equal). Carrying that out leads through the **Onsager algebra**: the non-commutative structure you get when the transfer matrix factors into pieces such as `$T = V_1 V_2$` with `$[V_1,V_2]\neq 0$`. That is the algebraic backbone behind the closed form for `$T_c$` in 2D.
 
-This is why physicists learn group theory and Lie algebras—they reveal hidden symmetries that make exact solutions possible!
+</details>
 
-### 3D Case: No Exact Solution
+### 3D: No Closed Form
 
-For the **3D Ising model**, there is **no known exact solution**. This is one of the most famous open problems in statistical physics!
+There is **no known closed-form** thermodynamic solution for the standard 3D Ising model comparable to 2D. Practically:
 
-**Why is 3D harder?**
-- Transfer matrix would be `$2^{L^2} \times 2^{L^2}$` (exponential in area, not just width)
-- The Onsager algebra structure doesn't generalize to 3D
-- No exact solution has been found despite decades of effort
+- A transfer-matrix viewpoint blows up (**exponential in cross-sectional area**, not just width).
+- Numerics give **`$T_c / J \approx 4.51$`** for the cubic lattice (see references).
 
-**What we know:**
-- Critical temperature: `$T_c / J \approx 4.51$` (from numerical methods)
-- Phase transition exists and is well-characterized
-- But no closed-form formula like the 2D case
-
-This makes the 3D Ising model a perfect test case for **numerical methods** like Simulated Annealing!
+So for us, **3D** is the part where we stop quoting closed forms and actually **run** the computational machinery.
 
 ---
+
+<span id="sec-implementation" />
 
 ## 3. Implementation Details
 
 ### 3.1 Fast Energy Calculation
 
-**The Problem**: Recomputing the total energy after each spin flip would be `$O(N^2)$`. This is too slow for large systems!
+**The Problem**: A **full** energy recomputation is **`$O(N)$`** (each spin only talks to a few neighbors, but you still touch every spin). If you did that after **every** proposed flip in a sweep of `$N$` proposals, a naive sweep would scale like **`$O(N^2)$`**.
 
-**The Solution**: Compute only the **local energy change** `$\Delta E$` when flipping a single spin.
+**The Solution**: Track only the **local energy change** `$\Delta E$` when flipping a single spin: **`$O(1)$`** work per proposal if you sum neighbors only.
 
 **Derivation**:
 
@@ -168,24 +151,18 @@ The change is:
 
 **Key insight**: Only the neighbors of the flipped spin contribute to the energy change!
 
-**Complexity**: `$O(1)$` per flip (only need to sum over neighbors) vs `$O(N)$` for full recomputation.
+**Complexity**: **`$O(1)$`** per accepted/tested flip versus **`$O(N)$`** for a full energy rebuild.
 
 ### 3.2 Periodic Boundary Conditions
 
-**Why Needed**: Fixed boundaries create **edge effects**. Spins at edges have fewer neighbors, which doesn't reflect the thermodynamic limit.
-
-**The Solution**: **Periodic boundary conditions** (PBC) treat the lattice as a **torus**:
+Fixed boundaries give spins at the edge fewer neighbors than bulk spins. **Periodic boundary conditions** (PBC) remove that artifact by treating the lattice as a **torus**:
 - Right edge connects to left edge
 - Top edge connects to bottom edge
 - In 3D: front connects to back
 
-**Topology**: 
-- 2D: Torus (donut shape)
-- 3D: Hypertorus
+**Topology**: 2D torus; 3D hypertorus: every site sees the same neighborhood pattern.
 
-**Why Torus?** Topologically, a torus has no boundaries: every point is equivalent. This eliminates edge effects and provides **translation invariance**.
-
-**Implementation**: Use the **modulo operator**:
+**Implementation** (**modulo** indexing):
 ```python
 def get_neighbors(self, i, j, k):
     """PBC: (i+1) % L wraps around"""
@@ -227,20 +204,18 @@ def get_neighbors(self, i, j, k):
 
 ### Why Validate First?
 
-Before using SA for optimization, we need to **validate** that our implementation produces correct physics. This ensures:
-- Our code is correct
-- The phase transition occurs at the expected `$T_c$`
-- We can trust our SA results
+Before cooling with SA, run **Metropolis at fixed `$T$`** and check observables near **`$T_c$`**. If the phase transition lands in the wrong place, debugging SA first would waste time.
 
-### What is "Fixed Temperature"?
+### What "Fixed Temperature" Means Here
 
-**Fixed temperature** means we run the Metropolis algorithm at a **constant temperature** `$T$` for many sweeps. The system reaches **thermal equilibrium** at that temperature, sampling from the Boltzmann distribution.
-
-We test at **multiple different temperatures** (low, medium, high) to see how the system behaves across the phase transition.
+Hold **`$T$` constant** for equilibration plus production sweeps so the chain samples roughly **Boltzmann** at that temperature; repeat across a temperature grid to cross the transition.
 
 ### 2D Validation
 
-Let's validate our 2D implementation by checking the phase transition near `$T_c \approx 2.269$`:
+Runs at fixed **`$T$`** near **`$T_c \approx 2.269$`**:
+
+<details className="code-details">
+  <summary><strong>2D validation code</strong> — <code>Ising2D</code>, Metropolis sweep, fixed-<code>T</code> driver</summary>
 
 ```python
 class Ising2D:
@@ -330,21 +305,20 @@ def run_fixed_T_2d(ising, T, n_sweeps, n_equil=100, seed=None):
     }
 ```
 
+</details>
+
 **Output:**
 
 ![2D Ising Validation](./output_cell_14.png)
 
-Running this validation shows that:
-- Phase transition occurs near `$T_c \approx 2.269$` (Onsager's exact result)
-- Low T: High magnetization (ordered phase)
-- High T: Low magnetization (disordered phase)
-- Energy increases smoothly with T
+The curves line up with **Onsager’s `$T_c$`**: ordered side below `$T_c$`, disordered above, smooth energy crossing.
 
 ### 3D Validation
 
-The same validation procedure works for 3D, just with a different critical temperature (`$T_c \approx 4.51$`). The physics is the same: we're just checking that our 3D implementation produces the correct phase transition.
+Same pipeline at **`$T_c \approx 4.51$`**. Code (full 3D lattice class):
 
-Here's the complete 3D Ising model implementation:
+<details className="code-details">
+  <summary><strong>3D validation code</strong> — <code>Ising3D</code>, Metropolis sweep, fixed-<code>T</code> driver</summary>
 
 ```python
 import numpy as np
@@ -492,24 +466,26 @@ def run_fixed_T_3d(ising, T, n_sweeps, n_equil=100, seed=None):
     }
 ```
 
+</details>
+
 **Output:**
 
 ![3D Ising Validation](./output_cell_16.png)
 
-The 3D validation confirms:
-- Phase transition occurs near `$T_c \approx 4.51$`
-- Same qualitative behavior as 2D
-- Implementation is correct and ready for SA optimization
+Qualitatively matches 2D; numerically pins **`$T_c$`** where literature says it should be: excellent signal before SA.
 
 ---
 
 ## 5. Simulated Annealing for 3D Ising
 
-Now that we've validated our implementation, let's use **Simulated Annealing** to optimize the 3D Ising model: finding the ground state configuration.
+Now we turn the dial: start hot so flips get accepted, then lower **`$T$`** toward **`$T_{\min}$`** and watch energy and acceptance along the way. The goal is a **cheap path** to a **very low** energy: not a proof, just a good final lattice.
 
 ### SA Implementation
 
 We'll use a **geometric cooling schedule**: `$T_{k+1} = \alpha T_k$` where `$\alpha = 0.98$` (slow cooling).
+
+<details className="code-details">
+  <summary><strong>Simulated annealing code</strong> — geometric schedule + <code>simulated_annealing_3d</code></summary>
 
 ```python
 class GeometricSchedule:
@@ -571,6 +547,8 @@ def simulated_annealing_3d(ising, schedule, sweeps_per_T=10, seed=None):
     }
 ```
 
+</details>
+
 ### Running SA
 
 ```python
@@ -599,37 +577,21 @@ E_final = ising.get_energy_per_spin()
 
 ![Simulated Annealing Results](./output_cell_19.png)
 
-### Key Characteristics of SA on Ising Model
+### Reading the Run
 
-**Energy Evolution**:
-- Starts high (random configuration)
-- Decreases gradually as temperature cools
-- Approaches ground state energy
-
-**Temperature Schedule**:
-- Starts high: Allows exploration (accepts many uphill moves)
-- Decreases gradually: Transitions to exploitation
-- Ends low: Mostly accepts downhill moves
-
-**Acceptance Rate**:
-- High at start: Many moves accepted (exploration)
-- Decreases with temperature: More selective (exploitation)
-- Low at end: Only good moves accepted
-
-**Configuration Evolution**:
-- High T: Disordered, many small domains
-- Medium T: Larger domains form
-- Low T: Mostly ordered, few domain walls
-
-**Comparison with Fixed-T**: SA finds lower energy than fixed-temperature Metropolis because it allows the system to explore at high temperature, then gradually settle into low-energy states.
+Energy tends to **drift down** as **`$T$`** drops. Early on the acceptance rate stays **high**: the lattice still explores. Later it gets **picky**, as it should. If you watch slices of the lattice, you can see **little islands** at hot **`$T$`** turn into **big patches** as **`$T$`** falls: same picture as in the theory post, but this time is real data.
 
 ---
 
 ## 6. Closing
 
-I hope you enjoyed this journey through the 3D Ising model and Simulated Annealing as much as I did! This is a perfect example of how physics can be used to solve hard optimization problems.
+Simulated annealing is still only **Metropolis** with a temperature that **drops**. The difference is we give the system room to **walk around** while **`$T$`** is high, then let it **settle** when **`$T$`** is low.
 
-I've been wanting to explore the Ising model for a while now, and this project was a great way to do it. I may write a follow-up post using Simulated Annealing to solve other optimization problems, but this feels like a solid foundation to build on.
+I did not tune this run to death: other **`$L$`**, **`$\alpha$`**, seeds, and schedules will behave differently. That is fine.
+
+What matters to me is that we used a **simulation** to check the **physics** first: does the transition land near **`$T_c$`** where it should? Once that looked right, we could trust the same machinery in a harder setting (**3D**), where there is no tidy closed form to lean on, and still run simulated annealing as an **optimizer** rather than a guess.
+
+That finishes the loop for me: **theory** in the companion post, **plots** that behave like the textbooks, then **practice** in code.
 
 ---
 

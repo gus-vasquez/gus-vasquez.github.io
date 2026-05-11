@@ -66,6 +66,49 @@ const Layout = ({ children, className = `` }: LayoutProps) => (
           paddingBottom: `1.15rem`,
         },
         /*
+          Collapsible code fences: same disclosure UX as narrative spoilers, but no tinted panel
+          so Prism/theme code blocks look unchanged when expanded.
+        */
+        "main details.code-details": {
+          marginTop: `1.15rem`,
+          marginBottom: `1.15rem`,
+          padding: `0`,
+          borderRadius: `8px`,
+          overflow: `visible`,
+          border: `none`,
+          backgroundColor: `transparent`,
+          boxShadow: `none`,
+        },
+        "main details.code-details summary": {
+          cursor: `pointer`,
+          display: `list-item`,
+          padding: `0.5rem 0.75rem`,
+          fontWeight: `600`,
+          fontSize: `0.95rem`,
+          backgroundColor: `color-mix(in srgb, ${get(t, `colors.text`)} 5%, ${get(t, `colors.background`)})`,
+          border: `1px dashed`,
+          borderColor: get(t, `colors.muted`),
+          borderRadius: `6px`,
+        },
+        "main details.code-details summary::marker": {
+          color: get(t, `colors.primary`),
+          fontSize: `1em`,
+        },
+        "main details.code-details summary::-webkit-details-marker": {
+          color: get(t, `colors.primary`),
+        },
+        "main details.code-details > *:not(summary)": {
+          paddingLeft: `0`,
+          paddingRight: `0`,
+          marginTop: `0.65rem`,
+        },
+        "main details.code-details > *:not(summary):nth-child(2)": {
+          paddingTop: `0`,
+        },
+        "main details.code-details > *:last-child:not(summary)": {
+          paddingBottom: `0`,
+        },
+        /*
           Display math: gatsby-browser wraps KaTeX output in div.math-display-panel only.
           KaTeX’s own root keeps class `.katex-display` — styling `.katex-display` would match twice.
         */

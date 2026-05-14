@@ -1,0 +1,15 @@
+rules_version = '2';
+// Deploy: `firebase deploy --only firestore:rules` (install Firebase CLI; run `firebase login` and `firebase use <projectId>`).
+// IP throttling / CAPTCHA deferred unless abuse appears (see plan).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /postLikes/{postId}/voters/{uid} {
+      // Public like counts use getCountFromServer on this collection.
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && !exists(/databases/$(database)/documents/postLikes/$(postId)/voters/$(uid));
+      allow update, delete: if false;
+    }
+  }
+}
